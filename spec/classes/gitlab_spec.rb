@@ -49,6 +49,22 @@ describe 'gitlab' do
     }
   end
 
+  # a non-default parameter set for SSL support with a non-default port
+  let :params_ssl_non do
+    {
+      :gitlab_ssl             => true,
+      :gitlab_ssl_self_signed => true,
+      :gitlab_ssl_port        => '4443'
+    }
+  end
+
+  # a non-default parameter set with non-default http port
+  let :params_non do
+    {
+      :gitlab_http_port       => '81'
+    }
+  end
+
   ## Gitlab
   describe 'input validation' do
     describe 'on a unsupported os' do
@@ -181,14 +197,14 @@ describe 'gitlab' do
           :cwd     => '/home/git',
           :user    => 'git',
           :path    => '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
-          :command => 'git clone -b 6-2-stable git://github.com/gitlabhq/gitlabhq.git ./gitlab',
+          :command => 'git clone -b 6-3-stable git://github.com/gitlabhq/gitlabhq.git ./gitlab',
           :creates => '/home/git/gitlab'
         )}
         it { should contain_exec('download gitlab-shell').with(
           :cwd     => '/home/git',
           :user    => 'git',
           :path    => '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
-          :command => 'git clone -b v1.7.8 git://github.com/gitlabhq/gitlab-shell.git ./gitlab-shell',
+          :command => 'git clone -b v1.7.9 git://github.com/gitlabhq/gitlab-shell.git ./gitlab-shell',
           :creates => '/home/git/gitlab-shell'
         )}
       end
@@ -237,16 +253,16 @@ describe 'gitlab' do
         it { should contain_file('/home/git/gitlab/config/database.yml').with(:ensure => 'file',:owner => 'git',:group => 'git')}
         it { should contain_file('/home/git/gitlab/config/database.yml').with_content(/adapter: mysql2/)}
         it { should contain_file('/home/git/gitlab/config/database.yml').with_content(/encoding: utf8/)}
-        it { should contain_file('/home/git/gitlab/config/database.yml').with_content(/database: gitladb/)}
-        it { should contain_file('/home/git/gitlab/config/database.yml').with_content(/username: gitladbu/)}
+        it { should contain_file('/home/git/gitlab/config/database.yml').with_content(/database: gitlab_db/)}
+        it { should contain_file('/home/git/gitlab/config/database.yml').with_content(/username: gitlab_user/)}
         it { should contain_file('/home/git/gitlab/config/database.yml').with_content(/password: changeme/)}
         it { should contain_file('/home/git/gitlab/config/database.yml').with_content(/host: localhost/)}
         context 'postgresql' do
           let(:params) {{ :gitlab_dbtype => 'pgsql' }}
           it { should contain_file('/home/git/gitlab/config/database.yml').with_content(/adapter: postgresql/)}
           it { should contain_file('/home/git/gitlab/config/database.yml').with_content(/encoding: unicode/)}
-          it { should contain_file('/home/git/gitlab/config/database.yml').with_content(/database: gitladb/)}
-          it { should contain_file('/home/git/gitlab/config/database.yml').with_content(/username: gitladbu/)}
+          it { should contain_file('/home/git/gitlab/config/database.yml').with_content(/database: gitlab_db/)}
+          it { should contain_file('/home/git/gitlab/config/database.yml').with_content(/username: gitlab_user/)}
           it { should contain_file('/home/git/gitlab/config/database.yml').with_content(/password: changeme/)}
           it { should contain_file('/home/git/gitlab/config/database.yml').with_content(/host: localhost/)}
           it { should contain_file('/home/git/gitlab/config/database.yml').with_content(/port: 5432/)}
@@ -265,6 +281,11 @@ describe 'gitlab' do
       describe 'gitlab config' do
         it { should contain_file('/home/git/gitlab/config/gitlab.yml').with(:ensure => 'file',:owner => 'git',:group => 'git')}
         it { should contain_file('/home/git/gitlab/config/gitlab.yml').with_content(/host: gitlab.fooboozoo.fr/)}
+        context 'with ssl' do
+          let(:params) {{ :gitlab_ssl => true }}
+          it { should contain_file('/home/git/gitlab/config/gitlab.yml').with_content(/port: 443/)}
+          it { should contain_file('/home/git/gitlab/config/gitlab.yml').with_content(/https: true/)}
+        end
         it { should contain_file('/home/git/gitlab/config/gitlab.yml').with_content(/port: 80/)}
         it { should contain_file('/home/git/gitlab/config/gitlab.yml').with_content(/https: false/)}
         it { should contain_file('/home/git/gitlab/config/gitlab.yml').with_content(/email_from: git@someserver.net/)}
@@ -283,6 +304,12 @@ describe 'gitlab' do
         it { should contain_file('/home/git/gitlab/config/resque.yml').with(:ensure => 'file',:owner => 'git',:group => 'git')}
         it { should contain_file('/home/git/gitlab/config/resque.yml').with_content(/production: redis:\/\/127.0.0.1/)}
       end # resque config
+      describe 'rack_attack config' do
+        it { should contain_file('/home/git/gitlab/config/initializers/rack_attack.rb').with(
+          :ensure => 'file',
+          :source => '/home/git/gitlab/config/initializers/rack_attack.rb.example'
+        )}
+      end # rack_attack config
       describe 'install gitlab' do
         it { should contain_exec('install gitlab').with(
           :user    => 'git',
@@ -408,6 +435,16 @@ describe 'gitlab' do
           it { should contain_file("#{params_set[:git_home]}/gitlab/config/gitlab.yml").with_content(/port: 443/)}
           it { should contain_file("#{params_set[:git_home]}/gitlab/config/gitlab.yml").with_content(/https: true/)}
         end
+        context 'with non-default http ports' do
+          let(:params) { params_set.merge(params_non) }
+          it { should contain_file("#{params_set[:git_home]}/gitlab/config/gitlab.yml").with_content(/port: #{params_set[:gitlab_http_port]}/)}
+          it { should contain_file("#{params_set[:git_home]}/gitlab/config/gitlab.yml").with_content(/https: false/)}
+          context 'with non-default https ports' do
+            let(:params) { params_set.merge(params_ssl_non) }
+            it { should contain_file("#{params_set[:git_home]}/gitlab/config/gitlab.yml").with_content(/port: #{params_set[:gitlab_ssl_port]}/)}
+            it { should contain_file("#{params_set[:git_home]}/gitlab/config/gitlab.yml").with_content(/https: true/)}
+          end
+        end
         it { should contain_file("#{params_set[:git_home]}/gitlab/config/gitlab.yml").with_content(/email_from: #{params_set[:git_email]}/)}
         it { should contain_file("#{params_set[:git_home]}/gitlab/config/gitlab.yml").with_content(/default_projects_limit: #{params_set[:gitlab_projects]}/)}
         it { should contain_file("#{params_set[:git_home]}/gitlab/config/gitlab.yml").with_content(/username_changing_enabled: #{params_set[:gitlab_username_change]}/)}
@@ -426,6 +463,12 @@ describe 'gitlab' do
         it { should contain_file("#{params_set[:git_home]}/gitlab/config/resque.yml").with(:ensure => 'file',:owner => params_set[:git_user],:group => params_set[:git_user])}
         it { should contain_file("#{params_set[:git_home]}/gitlab/config/resque.yml").with_content(/production: redis:\/\/redis.fooboozoo.fr/)}
       end # gitlab config
+      describe 'rack_attack config' do
+        it { should contain_file("#{params_set[:git_home]}/gitlab/config/initializers/rack_attack.rb").with(
+          :ensure => 'file',
+          :source => "#{params_set[:git_home]}/gitlab/config/initializers/rack_attack.rb.example"
+        )}
+      end # rack_attack config
       describe 'install gitlab' do
         it { should contain_exec('install gitlab').with(
           :user    => params_set[:git_user],
@@ -506,6 +549,15 @@ describe 'gitlab' do
         it { should contain_file('/etc/init.d/gitlab').with_content(/app_root="\/home\/git\/gitlab"/)}
         it { should contain_file('/etc/init.d/gitlab').with_content(/app_user="git"/)}
       end # gitlab init
+      describe 'gitlab logrotate' do
+        it { should contain_file("/etc/logrotate.d/gitlab").with(
+          :ensure => 'file',
+          :source => '/home/git/gitlab/lib/support/logrotate/gitlab',
+          :owner  => 'root',
+          :group  => 'root',
+          :mode   => '0644'
+        )}
+      end # gitlab logrotate
       describe 'gitlab directories' do
         ['gitlab/tmp','gitlab/tmp/pids','gitlab/tmp/sockets','gitlab/log','gitlab/public','gitlab/public/uploads'].each do |dir|
           it { should contain_file("/home/git/#{dir}").with(
@@ -554,6 +606,15 @@ describe 'gitlab' do
         it { should contain_file('/etc/init.d/gitlab').with_content(/app_root="#{params_set[:git_home]}\/gitlab"/)}
         it { should contain_file('/etc/init.d/gitlab').with_content(/app_user="#{params_set[:git_user]}"/)}
       end # gitlab init
+      describe 'gitlab logrotate' do
+        it { should contain_file("/etc/logrotate.d/gitlab").with(
+          :ensure => 'file',
+          :source => "#{params_set[:git_home]}/gitlab/lib/support/logrotate/gitlab",
+          :owner  => 'root',
+          :group  => 'root',
+          :mode   => '0644'
+        )}
+      end # gitlab logrotate
       describe 'gitlab directories' do
         ['gitlab/tmp','gitlab/tmp/pids','gitlab/tmp/sockets','gitlab/log','gitlab/public','gitlab/public/uploads'].each do |dir|
           it { should contain_file("#{params_set[:git_home]}/#{dir}").with(

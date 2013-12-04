@@ -26,7 +26,7 @@
 #
 # [*gitlab_branch*]
 #   Gitlab branch
-#   default: 6.2-stable
+#   default: 6-3-stable
 #
 # [*gitlabshell_sources*]
 #   Gitlab-shell sources
@@ -34,7 +34,7 @@
 #
 # [*gitlabshell_banch*]
 #   Gitlab-shell branch
-#   default: v1.7.8
+#   default: v1.7.9
 #
 # [*gitlab_http_port*]
 #   Port that NGINX listens on for HTTP traffic
@@ -58,11 +58,11 @@
 #
 # [*gitlab_dbname*]
 #   Gitlab database name
-#   default: gitlabdb
+#   default: gitlab_db
 #
 # [*gitlab_dbuser*]
 #   Gitlab database user
-#   default: gitlabu
+#   default: gitlab_user
 #
 # [*gitlab_dbpwd*]
 #   Gitlab database password
@@ -170,7 +170,7 @@
 # === Copyright
 #
 # See LICENSE file
-# Andrew Tomaka, Sebastien Badia (c) 2013
+# Andrew Tomaka, Sebastien Badia, Steffen Roegner (c) 2013
 #
 class gitlab(
     $git_user               = $gitlab::params::git_user,

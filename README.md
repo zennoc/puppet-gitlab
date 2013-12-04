@@ -1,6 +1,6 @@
 # Puppet-gitlab [![Build Status](https://travis-ci.org/sbadia/puppet-gitlab.png?branch=master)](https://travis-ci.org/sbadia/puppet-gitlab)
 
-Tested successfully with Gitlab 6-2-stable on Ubuntu 12.04 and Debian Wheezy (7.2) with Puppet 3.2 or newer.
+Tested successfully with Gitlab 6-3-stable on Ubuntu 12.04 and Debian Wheezy (7.2) with Puppet 3.2 or newer.
 
 #### Table of contents
 
@@ -26,7 +26,7 @@ This module is based on the admin guides for [gitlab](https://github.com/gitlabh
 - [puppet-gitlab](http://forge.puppetlabs.com/sbadia/gitlab) on puppet forge.
 
 ## Dependencies
-- [puppetlabs/puppetlabs-stdlib](https://github.com/puppetlabs/puppetlabs-stdlib) >= 4.1.0
+- [puppetlabs/puppetlabs-stdlib](https://github.com/puppetlabs/puppetlabs-stdlib)
 See [gitlab example](https://github.com/sbadia/vagrant-gitlab/blob/master/examples/gitlab.pp).
 
 ## GitLab web interface
@@ -45,16 +45,16 @@ See [gitlab example](https://github.com/sbadia/vagrant-gitlab/blob/master/exampl
 * `git_email`: Email address for gitlab user (default: git@someserver.net)
 * `git_comment`: Gitlab user comment (default: GitLab)
 * `gitlab_sources`: Gitlab sources (default: git://github.com/gitlabhq/gitlabhq.git)
-* `gitlab_branch`: Gitlab branch (default: 6-2-stable)
+* `gitlab_branch`: Gitlab branch (default: 6-3-stable)
 * `gitlabshell_sources`: Gitlab-shell sources (default: git://github.com/gitlabhq/gitlab-shell.git)
-* `gitlabshell_banch`: Gitlab-shell branch (default: v1.7.8)
+* `gitlabshell_banch`: Gitlab-shell branch (default: v1.7.9)
 * `gitlab_http_port`: Port that NGINX listens on for HTTP traffic (default: 80)
 * `gitlab_ssl_port`: Port that NGINX listens on for HTTPS traffic (default: 443)
 * `gitlab_redishost`: Redis host used for Sidekiq (default: localhost)
 * `gitlab_redisport`: Redis host used for Sidekiq (default: 6379)
 * `gitlab_dbtype`: Gitlab database type (default: mysql)
-* `gitlab_dbname`: Gitlab database name (default: gitlabdb)
-* `gitlab_dbuser`: Gitlab database user (default: gitlabu)
+* `gitlab_dbname`: Gitlab database name (default: gitlab\_db)
+* `gitlab_dbuser`: Gitlab database user (default: gitlab\_user)
 * `gitlab_dbpwd`: Gitlab database password (default: changeme)
 * `gitlab_dbhost`: Gitlab database host (default: localhost)
 * `gitlab_dbport`: Gitlab database port (default: 3306)
@@ -80,18 +80,18 @@ See [gitlab example](https://github.com/sbadia/vagrant-gitlab/blob/master/exampl
 
 _Note:_ Assume that a database server is already installed on your server/infrastructure (see: [vagrant-gitlab](https://github.com/sbadia/vagrant-gitlab/blob/master/examples/gitlab.pp)).
 
-```
-  class {
-    'gitlab':
-      git_email         => 'notifs@foobar.fr',
-      git_comment       => 'GitLab',
-      gitlab_domain     => 'gitlab.foobar.fr',
-      gitlab_dbtype     => 'mysql',
-      gitlab_dbname     => $gitlab_dbname,
-      gitlab_dbuser     => $gitlab_dbuser,
-      gitlab_dbpwd      => $gitlab_dbpwd,
-      ldap_enabled      => false,
-  }
+```puppet
+class {
+  'gitlab':
+    git_email         => 'notifs@foobar.fr',
+    git_comment       => 'GitLab',
+    gitlab_domain     => 'gitlab.foobar.fr',
+    gitlab_dbtype     => 'mysql',
+    gitlab_dbname     => $gitlab_dbname,
+    gitlab_dbuser     => $gitlab_dbuser,
+    gitlab_dbpwd      => $gitlab_dbpwd,
+    ldap_enabled      => false,
+}
 ```
 
 # Limitations
