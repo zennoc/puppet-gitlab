@@ -11,7 +11,7 @@ class gitlab::install inherits gitlab {
 
   Exec {
     user => $git_user,
-    path => '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
+    path => $exec_path,
   }
 
   File {
@@ -64,7 +64,7 @@ class gitlab::install inherits gitlab {
   exec { 'install gitlab':
     command => "bundle install --without development aws test ${gitlab_without_gems} --deployment",
     cwd     => "${git_home}/gitlab",
-    creates => "${git_home}/.git_setup_done",
+    unless  => 'bundle check',
     timeout => 0,
     require => [
       File["${git_home}/gitlab/config/database.yml"],
@@ -79,6 +79,13 @@ class gitlab::install inherits gitlab {
     cwd     => "${git_home}/gitlab",
     creates => "${git_home}/.gitlab_setup_done",
     require => Exec['install gitlab'],
+    notify  => Exec['precompile assets'],
+  }
+
+  exec { 'precompile assets':
+    command     => 'bundle exec rake assets:precompile RAILS_ENV=production',
+    cwd         =>  "${git_home}/gitlab",
+    refreshonly =>  true,
   }
 
   file {
@@ -87,11 +94,6 @@ class gitlab::install inherits gitlab {
       owner   => 'root',
       group   => 'root',
       require => Exec['setup gitlab database'];
-    "${git_home}/.git_setup_done":
-      ensure  => present,
-      owner   => 'root',
-      group   => 'root',
-      require => Exec['install gitlab'];
   }
 
 }

@@ -3,16 +3,18 @@
 #
 class gitlab::params {
 
+  $ensure                 = 'present'
   $git_user               = 'git'
   $git_home               = '/home/git'
   $git_email              = 'git@someserver.net'
   $git_comment            = 'GitLab'
   $gitlab_sources         = 'git://github.com/gitlabhq/gitlabhq.git'
-  $gitlab_branch          = '6-3-stable'
+  $gitlab_branch          = '6-4-stable'
   $gitlabshell_sources    = 'git://github.com/gitlabhq/gitlab-shell.git'
-  $gitlabshell_branch     = 'v1.7.9'
+  $gitlabshell_branch     = 'v1.8.0'
   $gitlab_http_port       = '80'
   $gitlab_ssl_port        = '443'
+  $gitlab_http_timeout    = '60'
   $gitlab_redishost       = '127.0.0.1'
   $gitlab_redisport       = '6379'
   $gitlab_dbtype          = 'mysql'
@@ -30,6 +32,8 @@ class gitlab::params {
   $gitlab_projects        = '10'
   $gitlab_username_change = true
   $gitlab_unicorn_port    = '8080'
+  $gitlab_unicorn_worker  = '2'
+  $exec_path              = '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
   $ldap_enabled           = false
   $ldap_host              = 'ldap.domain.com'
   $ldap_base              = 'dc=domain,dc=com'

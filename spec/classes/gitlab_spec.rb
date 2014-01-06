@@ -28,9 +28,12 @@ describe 'gitlab' do
       :gitlab_dbpwd           => 'Cie7cheewei<ngi3',
       :gitlab_dbhost          => 'sql.fooboozoo.fr',
       :gitlab_dbport          => '2345',
+      :gitlab_http_timeout    => '300',
       :gitlab_projects        => '42',
       :gitlab_username_change => false,
       :gitlab_unicorn_port    => '8888',
+      :gitlab_unicorn_worker  => '8',
+      :exec_path              => '/opt/bw/bin:/bin:/usr/bin:/usr/sbin:/sbin:/usr/local/bin:/usr/local/sbin',
       :ldap_host              => 'ldap.fooboozoo.fr',
       :ldap_base              => 'dc=fooboozoo,dc=fr',
       :ldap_port              => '666',
@@ -193,36 +196,36 @@ describe 'gitlab' do
   describe 'gitlab::package' do
     describe 'get gitlab{-shell} sources' do
       context 'with default params' do
-        it { should contain_exec('download gitlab').with(
-          :cwd     => '/home/git',
-          :user    => 'git',
-          :path    => '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
-          :command => 'git clone -b 6-3-stable git://github.com/gitlabhq/gitlabhq.git ./gitlab',
-          :creates => '/home/git/gitlab'
+        it { should contain_vcsrepo('/home/git/gitlab').with(
+          :ensure   => 'present',
+          :user     => 'git',
+          :provider => 'git',
+          :source   => 'git://github.com/gitlabhq/gitlabhq.git',
+          :revision => '6-4-stable'
         )}
-        it { should contain_exec('download gitlab-shell').with(
-          :cwd     => '/home/git',
-          :user    => 'git',
-          :path    => '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
-          :command => 'git clone -b v1.7.9 git://github.com/gitlabhq/gitlab-shell.git ./gitlab-shell',
-          :creates => '/home/git/gitlab-shell'
+        it { should contain_vcsrepo('/home/git/gitlab-shell').with(
+          :ensure   => 'present',
+          :user     => 'git',
+          :provider => 'git',
+          :source   => 'git://github.com/gitlabhq/gitlab-shell.git',
+          :revision => 'v1.8.0'
         )}
       end
       context 'with specifics params' do
         let(:params) { params_set }
-        it { should contain_exec('download gitlab').with(
-          :cwd     => params_set[:git_home],
-          :command => "git clone -b #{params_set[:gitlab_branch]} #{params_set[:gitlab_sources]} ./gitlab",
-          :user    => params_set[:git_user],
-          :path    => '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
-          :creates => "#{params_set[:git_home]}/gitlab"
+        it { should contain_vcsrepo("#{params_set[:git_home]}/gitlab").with(
+          :ensure   => 'present',
+          :user     => params_set[:git_user],
+          :provider => 'git',
+          :source   => params_set[:gitlab_sources],
+          :revision => params_set[:gitlab_branch]
         )}
-        it { should contain_exec('download gitlab-shell').with(
-          :cwd     => params_set[:git_home],
-          :command => "git clone -b #{params_set[:gitlabshell_branch]} #{params_set[:gitlabshell_sources]} ./gitlab-shell",
-          :user    => params_set[:git_user],
-          :path    => '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
-          :creates => "#{params_set[:git_home]}/gitlab-shell"
+        it { should contain_vcsrepo("#{params_set[:git_home]}/gitlab-shell").with(
+          :ensure   => 'present',
+          :user     => params_set[:git_user],
+          :provider => 'git',
+          :source   => params_set[:gitlabshell_sources],
+          :revision => params_set[:gitlabshell_branch]
         )}
       end
     end # get gitlab sources
@@ -274,6 +277,7 @@ describe 'gitlab' do
         it { should contain_file('/home/git/gitlab/config/unicorn.rb').with_content(/working_directory "\/home\/git\/gitlab"/)}
         it { should contain_file('/home/git/gitlab/config/unicorn.rb').with_content(/listen "127.0.0.1:8080"/)}
         it { should contain_file('/home/git/gitlab/config/unicorn.rb').with_content(/listen "\/home\/git\/gitlab\/tmp\/sockets\/gitlab.socket"/)}
+        it { should contain_file('/home/git/gitlab/config/unicorn.rb').with_content(/timeout 60/)}
         it { should contain_file('/home/git/gitlab/config/unicorn.rb').with_content(/pid "\/home\/git\/gitlab\/tmp\/pids\/unicorn.pid"/)}
         it { should contain_file('/home/git/gitlab/config/unicorn.rb').with_content(/stderr_path "\/home\/git\/gitlab\/log\/unicorn.stderr.log"/)}
         it { should contain_file('/home/git/gitlab/config/unicorn.rb').with_content(/stdout_path "\/home\/git\/gitlab\/log\/unicorn.stdout.log"/)}
@@ -315,19 +319,13 @@ describe 'gitlab' do
           :user    => 'git',
           :path    => '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
           :command => 'bundle install --without development aws test postgres --deployment',
+          :unless  => 'bundle check',
           :cwd     => '/home/git/gitlab',
-          :creates => '/home/git/.git_setup_done',
           :timeout => 0,
           :require => ['File[/home/git/gitlab/config/database.yml]',
                         'File[/home/git/gitlab/config/unicorn.rb]',
                         'File[/home/git/gitlab/config/gitlab.yml]',
                         'File[/home/git/gitlab/config/resque.yml]']
-        )}
-        it { should contain_file("/home/git/.git_setup_done").with(
-          :ensure   => 'present',
-          :owner    => 'root',
-          :group    => 'root',
-          :require  => 'Exec[install gitlab]'
         )}
         context 'postgresql' do
           let(:params) {{ :gitlab_dbtype => 'pgsql' }}
@@ -335,8 +333,8 @@ describe 'gitlab' do
             :user    => 'git',
             :path    => '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
             :command => 'bundle install --without development aws test mysql --deployment',
+            :unless  => 'bundle check',
             :cwd     => '/home/git/gitlab',
-            :creates => '/home/git/.git_setup_done',
             :timeout => 0,
             :require => ['File[/home/git/gitlab/config/database.yml]',
                           'File[/home/git/gitlab/config/unicorn.rb]',
@@ -383,7 +381,7 @@ describe 'gitlab' do
         it { should contain_file("#{params_set[:git_home]}/gitlab-shell/config.yml").with_content(/port: #{params_set[:gitlab_redisport]}/)}
         it { should contain_exec('install gitlab-shell').with(
           :user     => params_set[:git_user],
-          :path     => '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
+          :path     => params_set[:exec_path],
           :command  => "ruby #{params_set[:git_home]}/gitlab-shell/bin/install",
           :cwd      => params_set[:git_home],
           :creates  => "#{params_set[:gitlab_repodir]}/repositories",
@@ -416,10 +414,11 @@ describe 'gitlab' do
       end # database config
       describe 'unicorn config' do
         it { should contain_file("#{params_set[:git_home]}/gitlab/config/unicorn.rb").with(:ensure => 'file',:owner => params_set[:git_user],:group => params_set[:git_user])}
-        it { should contain_file("#{params_set[:git_home]}/gitlab/config/unicorn.rb").with_content(/worker_processes 2/)}
+        it { should contain_file("#{params_set[:git_home]}/gitlab/config/unicorn.rb").with_content(/worker_processes #{params_set[:gitlab_unicorn_worker]}/)}
         it { should contain_file("#{params_set[:git_home]}/gitlab/config/unicorn.rb").with_content(/working_directory "#{params_set[:git_home]}\/gitlab"/)}
 
         it { should contain_file("#{params_set[:git_home]}/gitlab/config/unicorn.rb").with_content(/listen "127.0.0.1:#{params_set[:gitlab_unicorn_port]}"/)}
+        it { should contain_file("#{params_set[:git_home]}/gitlab/config/unicorn.rb").with_content(/timeout #{params_set[:gitlab_http_timeout]}/)}
         it { should contain_file("#{params_set[:git_home]}/gitlab/config/unicorn.rb").with_content(/listen "#{params_set[:git_home]}\/gitlab\/tmp\/sockets\/gitlab.socket"/)}
         it { should contain_file("#{params_set[:git_home]}/gitlab/config/unicorn.rb").with_content(/pid "#{params_set[:git_home]}\/gitlab\/tmp\/pids\/unicorn.pid"/)}
         it { should contain_file("#{params_set[:git_home]}/gitlab/config/unicorn.rb").with_content(/stderr_path "#{params_set[:git_home]}\/gitlab\/log\/unicorn.stderr.log"/)}
@@ -472,30 +471,24 @@ describe 'gitlab' do
       describe 'install gitlab' do
         it { should contain_exec('install gitlab').with(
           :user    => params_set[:git_user],
-          :path    => '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
+          :path    => params_set[:exec_path],
           :command => 'bundle install --without development aws test postgres --deployment',
+          :unless  => 'bundle check',
           :cwd     => "#{params_set[:git_home]}/gitlab",
-          :creates => "#{params_set[:git_home]}/.git_setup_done",
           :timeout => 0,
           :require => ["File[#{params_set[:git_home]}/gitlab/config/database.yml]",
                         "File[#{params_set[:git_home]}/gitlab/config/unicorn.rb]",
                         "File[#{params_set[:git_home]}/gitlab/config/gitlab.yml]",
                         "File[#{params_set[:git_home]}/gitlab/config/resque.yml]"]
         )}
-        it { should contain_file("#{params_set[:git_home]}/.git_setup_done").with(
-          :ensure   => 'present',
-          :owner    => 'root',
-          :group    => 'root',
-          :require  => 'Exec[install gitlab]'
-        )}
         context 'postgresql' do
           let(:params) { params_set.merge({ :gitlab_dbtype => 'pgsql' }) }
           it { should contain_exec('install gitlab').with(
             :user    => params_set[:git_user],
-            :path    => '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
+            :path    => params_set[:exec_path],
             :command => 'bundle install --without development aws test mysql --deployment',
+            :unless  => 'bundle check',
             :cwd     => "#{params_set[:git_home]}/gitlab",
-            :creates => "#{params_set[:git_home]}/.git_setup_done",
             :timeout => 0,
             :require => ["File[#{params_set[:git_home]}/gitlab/config/database.yml]",
                           "File[#{params_set[:git_home]}/gitlab/config/unicorn.rb]",
@@ -507,7 +500,7 @@ describe 'gitlab' do
       describe 'setup gitlab database' do
         it { should contain_exec('setup gitlab database').with(
           :user    => params_set[:git_user],
-          :path    => '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
+          :path    => params_set[:exec_path],
           :command => '/usr/bin/yes yes | bundle exec rake gitlab:setup RAILS_ENV=production',
           :cwd     => "#{params_set[:git_home]}/gitlab",
           :creates => "#{params_set[:git_home]}/.gitlab_setup_done",
@@ -538,16 +531,28 @@ describe 'gitlab' do
         it { should contain_file('/etc/nginx/conf.d/gitlab.conf').with_content(/server_name gitlab.fooboozoo.fr;/)}
         it { should contain_file('/etc/nginx/conf.d/gitlab.conf').with_content(/server_tokens off;/)}
         it { should contain_file('/etc/nginx/conf.d/gitlab.conf').with_content(/root \/home\/git\/gitlab\/public;/)}
+        it { should contain_file('/etc/nginx/conf.d/gitlab.conf').with_content(/proxy_read_timeout 60;/)}
+        it { should contain_file('/etc/nginx/conf.d/gitlab.conf').with_content(/proxy_connect_timeout 60;/)}
       end # nginx config
       describe 'gitlab init' do
-        it { should contain_file('/etc/init.d/gitlab').with(
+        it { should contain_file('/etc/default/gitlab').with(
           :ensure => 'file',
           :owner  => 'root',
           :group  => 'root',
-          :mode   => '0755'
+          :mode   => '0644'
         )}
-        it { should contain_file('/etc/init.d/gitlab').with_content(/app_root="\/home\/git\/gitlab"/)}
-        it { should contain_file('/etc/init.d/gitlab').with_content(/app_user="git"/)}
+        it { should contain_file('/etc/default/gitlab').with_content(/app_root="\/home\/git\/gitlab"/)}
+        it { should contain_file('/etc/default/gitlab').with_content(/app_user="git"/)}
+      end # gitlab default
+      describe 'gitlab init' do
+        it { should contain_file('/etc/init.d/gitlab').with(
+          :ensure  => 'file',
+          :owner   => 'root',
+          :group   => 'root',
+          :mode    => '0755',
+          :require => 'File[/etc/default/gitlab]',
+          :source  => '/home/git/gitlab/lib/support/init.d/gitlab'
+        )}
       end # gitlab init
       describe 'gitlab logrotate' do
         it { should contain_file("/etc/logrotate.d/gitlab").with(
@@ -583,6 +588,8 @@ describe 'gitlab' do
         it { should contain_file('/etc/nginx/conf.d/gitlab.conf').with_content(/server_name gitlab.fooboozoo.fr;/)}
         it { should contain_file('/etc/nginx/conf.d/gitlab.conf').with_content(/server_tokens off;/)}
         it { should contain_file('/etc/nginx/conf.d/gitlab.conf').with_content(/root #{params_set[:git_home]}\/gitlab\/public;/)}
+        it { should contain_file('/etc/nginx/conf.d/gitlab.conf').with_content(/proxy_read_timeout #{params_set[:gitlab_http_timeout]};/)}
+        it { should contain_file('/etc/nginx/conf.d/gitlab.conf').with_content(/proxy_connect_timeout #{params_set[:gitlab_http_timeout]};/)}
         context 'with ssl' do
           let(:params) { params_set.merge(params_ssl) }
           it { should contain_file('/etc/nginx/conf.d/gitlab.conf').with_content(/listen 443;/)}
@@ -596,15 +603,25 @@ describe 'gitlab' do
             it { should contain_file('/etc/nginx/conf.d/gitlab.conf').with_content(/ssl_certificate_key           \/srv\/ssl\/gitlab.key;/)}
         end
       end # nginx config
-      describe 'gitlab init' do
-        it { should contain_file('/etc/init.d/gitlab').with(
+      describe 'gitlab default' do
+        it { should contain_file('/etc/default/gitlab').with(
           :ensure => 'file',
           :owner  => 'root',
           :group  => 'root',
-          :mode   => '0755'
+          :mode   => '0644'
         )}
-        it { should contain_file('/etc/init.d/gitlab').with_content(/app_root="#{params_set[:git_home]}\/gitlab"/)}
-        it { should contain_file('/etc/init.d/gitlab').with_content(/app_user="#{params_set[:git_user]}"/)}
+        it { should contain_file('/etc/default/gitlab').with_content(/app_root="#{params_set[:git_home]}\/gitlab"/)}
+        it { should contain_file('/etc/default/gitlab').with_content(/app_user="#{params_set[:git_user]}"/)}
+      end # gitlab default
+      describe 'gitlab init' do
+        it { should contain_file('/etc/init.d/gitlab').with(
+          :ensure  => 'file',
+          :owner   => 'root',
+          :group   => 'root',
+          :mode    => '0755',
+          :require => 'File[/etc/default/gitlab]',
+          :source  => "#{params_set[:git_home]}/gitlab/lib/support/init.d/gitlab"
+        )}
       end # gitlab init
       describe 'gitlab logrotate' do
         it { should contain_file("/etc/logrotate.d/gitlab").with(

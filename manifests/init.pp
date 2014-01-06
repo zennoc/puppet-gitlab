@@ -4,6 +4,10 @@
 #
 # === Parameters
 #
+# [*ensure*]
+#   Ensure present, latest. absent is not yet supported
+#   default: present
+#
 # [*git_user*]
 #   Name of gitlab user
 #   default: git
@@ -26,7 +30,7 @@
 #
 # [*gitlab_branch*]
 #   Gitlab branch
-#   default: 6-3-stable
+#   default: 6-4-stable
 #
 # [*gitlabshell_sources*]
 #   Gitlab-shell sources
@@ -34,7 +38,7 @@
 #
 # [*gitlabshell_banch*]
 #   Gitlab-shell branch
-#   default: v1.7.9
+#   default: v1.8.0
 #
 # [*gitlab_http_port*]
 #   Port that NGINX listens on for HTTP traffic
@@ -43,6 +47,10 @@
 # [*gitlab_ssl_port*]
 #   Port that NGINX listens on for HTTPS traffic
 #   default: 443
+#
+# [*gitlab_http_timeout*]
+#   HTTP timeout (unicorn and nginx)
+#   default: 60
 #
 # [*gitlab_redishost*]
 #   Redis host used for Sidekiq
@@ -173,6 +181,7 @@
 # Andrew Tomaka, Sebastien Badia, Steffen Roegner (c) 2013
 #
 class gitlab(
+    $ensure                 = $gitlab::params::ensure,
     $git_user               = $gitlab::params::git_user,
     $git_home               = $gitlab::params::git_home,
     $git_email              = $gitlab::params::git_email,
@@ -183,6 +192,7 @@ class gitlab(
     $gitlabshell_sources    = $gitlab::params::gitlabshell_sources,
     $gitlab_http_port       = $gitlab::params::gitlab_http_port,
     $gitlab_ssl_port        = $gitlab::params::gitlab_ssl_port,
+    $gitlab_http_timeout    = $gitlab::params::gitlab_http_timeout,
     $gitlab_redishost       = $gitlab::params::gitlab_redishost,
     $gitlab_redisport       = $gitlab::params::gitlab_redisport,
     $gitlab_dbtype          = $gitlab::params::gitlab_dbtype,
@@ -200,6 +210,8 @@ class gitlab(
     $gitlab_projects        = $gitlab::params::gitlab_projects,
     $gitlab_username_change = $gitlab::params::gitlab_username_change,
     $gitlab_unicorn_port    = $gitlab::params::gitlab_unicorn_port,
+    $gitlab_unicorn_worker  = $gitlab::params::gitlab_unicorn_worker,
+    $exec_path              = $gitlab::params::exec_path,
     $ldap_enabled           = $gitlab::params::ldap_enabled,
     $ldap_host              = $gitlab::params::ldap_host,
     $ldap_base              = $gitlab::params::ldap_base,
@@ -228,22 +240,26 @@ class gitlab(
   validate_bool($gitlab_username_change)
   validate_bool($ldap_enabled)
 
-  validate_re($gitlab_branch, '^\d-\d-stable', 'gitlab_branch is not valid (1-1-stable)')
-  validate_re($gitlabshell_branch, '^v\d.\d.\d$', 'gitlabshell_branch is not valid (v1.1.1)')
   validate_re($gitlab_dbtype, '(mysql|pgsql)', 'gitlab_dbtype is not supported')
   validate_re($gitlab_dbport, '^\d+$', 'gitlab_dbport is not a valid port')
   validate_re($ldap_port, '^\d+$', 'ldap_port is not a valid port')
   validate_re($gitlab_ssl_port, '^\d+$', 'gitlab_ssl_port is not a valid port')
+  validate_re($gitlab_http_port, '^\d+$', 'gitlab_http_port is not a valid port')
+  validate_re($gitlab_http_timeout, '^\d+$', 'gitlab_http_timeout is not a number')
   validate_re($gitlab_redisport, '^\d+$', 'gitlab_redisport is not a valid port')
-  validate_re($ldap_method, '(ssl|tls)', 'ldap_method is not supported (ssl or tls)')
+  validate_re($ldap_method, '(ssl|tls|plain)', 'ldap_method is not supported (ssl, tls or plain)')
   validate_re($gitlab_projects, '^\d+$', 'gitlab_projects is not valid')
   validate_re($gitlab_unicorn_port, '^\d+$', 'gitlab_unicorn_port is not valid')
+  validate_re($gitlab_unicorn_worker, '^\d+$', 'gitlab_unicorn_worker is not valid')
+  validate_re($ensure, '(present|latest)', 'ensure is not valid (present|latest)')
 
   validate_string($git_user)
   validate_string($git_email)
   validate_string($git_comment)
   validate_string($gitlab_sources)
+  validate_string($gitlab_branch)
   validate_string($gitlabshell_sources)
+  validate_string($gitlabshell_branch)
   validate_string($gitlab_dbname)
   validate_string($gitlab_dbuser)
   validate_string($gitlab_dbpwd)
