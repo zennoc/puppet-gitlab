@@ -11,10 +11,10 @@ production:
   reconnect: false
   database: <%= @gitlab_dbname %>
   pool: 10
+  reaping_frequency: 10
   username: <%= @gitlab_dbuser %>
-  password: <%= @gitlab_dbpwd %>
+  password: '<%= @gitlab_dbpwd %>'
   host: <%= @gitlab_dbhost %>
-  # host: localhost
   # socket: /tmp/mysql.sock
 <% when 'pgsql' -%>
 production:
@@ -23,10 +23,8 @@ production:
   database: <%= @gitlab_dbname %>
   pool: 10
   username: <%= @gitlab_dbuser %>
-  password: <%= @gitlab_dbpwd %>
+  password: '<%= @gitlab_dbpwd %>'
   host: <%= @gitlab_dbhost %>
   port: <%= @gitlab_dbport %>
-  # host: localhost
-  # port: 5432
   # socket: /tmp/postgresql.sock
 <% end -%>
