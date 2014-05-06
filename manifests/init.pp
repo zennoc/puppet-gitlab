@@ -40,6 +40,11 @@
 #   Gitlab-shell branch
 #   default: v1.8.0
 #
+# [*gitlab_manage_nginx*]
+#   Whether or not this module should install a templated Nginx
+#   configuration; set to false to manage separately
+#   default: true
+#
 # [*gitlab_http_port*]
 #   Port that NGINX listens on for HTTP traffic
 #   default: 80
@@ -87,6 +92,11 @@
 # [*gitlab_domain*]
 #   Gitlab domain
 #   default: $fqdn
+#
+# [*gitlab_domain_alias*]
+#   Gitlab domain aliases for nginx
+#   default: false (does not configure any alias)
+#   examples: "hostname1" or "hostname1 hostname2 hostname3.example.com"
 #
 # [*gitlab_repodir*]
 #   Gitlab repository directory
@@ -151,6 +161,11 @@
 # [*gitlab_bundler_flags*]
 #   Flags that should be passed to bundler when installing gems
 #   (default: --deployment)
+#
+# [*gitlab_ensure_postfix*]
+#   Whether or not this module should ensure the postfix package is
+#   installed (used to manage conflicts with other modules)
+#   default: true
 #
 # [*ldap_enabled*]
 #   Enable LDAP backend for gitlab web (see bellow)
@@ -238,6 +253,7 @@ class gitlab(
     $gitlab_branch            = $gitlab::params::gitlab_branch,
     $gitlabshell_branch       = $gitlab::params::gitlabshell_branch,
     $gitlabshell_sources      = $gitlab::params::gitlabshell_sources,
+    $gitlab_manage_nginx      = $gitlab::params::gitlab_manage_nginx,
     $gitlab_http_port         = $gitlab::params::gitlab_http_port,
     $gitlab_ssl_port          = $gitlab::params::gitlab_ssl_port,
     $gitlab_http_timeout      = $gitlab::params::gitlab_http_timeout,
@@ -250,6 +266,7 @@ class gitlab(
     $gitlab_dbhost            = $gitlab::params::gitlab_dbhost,
     $gitlab_dbport            = $gitlab::params::gitlab_dbport,
     $gitlab_domain            = $gitlab::params::gitlab_domain,
+    $gitlab_domain_alias      = $gitlab::params::gitlab_domain_alias,
     $gitlab_repodir           = $gitlab::params::gitlab_repodir,
     $gitlab_backup            = $gitlab::params::gitlab_backup,
     $gitlab_backup_path       = $gitlab::params::gitlab_backup_path,
@@ -266,6 +283,7 @@ class gitlab(
     $gitlab_unicorn_port      = $gitlab::params::gitlab_unicorn_port,
     $gitlab_unicorn_worker    = $gitlab::params::gitlab_unicorn_worker,
     $gitlab_bundler_flags     = $gitlab::params::gitlab_bundler_flags,
+    $gitlab_ensure_postfix    = $gitlab::params::gitlab_ensure_postfix,
     $exec_path                = $gitlab::params::exec_path,
     $ldap_enabled             = $gitlab::params::ldap_enabled,
     $ldap_host                = $gitlab::params::ldap_host,

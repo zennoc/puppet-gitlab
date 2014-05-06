@@ -12,6 +12,7 @@ class gitlab::params {
   $gitlab_branch            = '6-7-stable'
   $gitlabshell_sources      = 'git://github.com/gitlabhq/gitlab-shell.git'
   $gitlabshell_branch       = 'v1.9.1'
+  $gitlab_manage_nginx      = true
   $gitlab_http_port         = '80'
   $gitlab_ssl_port          = '443'
   $gitlab_http_timeout      = '60'
@@ -24,6 +25,7 @@ class gitlab::params {
   $gitlab_dbhost            = 'localhost'
   $gitlab_dbport            = '5432'
   $gitlab_domain            = $::fqdn
+  $gitlab_domain_alias      = false
   $gitlab_repodir           = $git_home
   $gitlab_backup            = false
   $gitlab_backup_path       = 'tmp/backups/'
@@ -40,6 +42,7 @@ class gitlab::params {
   $gitlab_unicorn_port      = '8080'
   $gitlab_unicorn_worker    = '2'
   $gitlab_bundler_flags     = '--deployment'
+  $gitlab_ensure_postfix    = true
   $exec_path                = '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
   $ldap_enabled             = false
   $ldap_host                = 'ldap.domain.com'
