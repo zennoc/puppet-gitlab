@@ -9,9 +9,9 @@ class gitlab::params {
   $git_email                = 'git@someserver.net'
   $git_comment              = 'GitLab'
   $gitlab_sources           = 'git://github.com/gitlabhq/gitlabhq.git'
-  $gitlab_branch            = '6-7-stable'
+  $gitlab_branch            = '6-9-stable'
   $gitlabshell_sources      = 'git://github.com/gitlabhq/gitlab-shell.git'
-  $gitlabshell_branch       = 'v1.9.1'
+  $gitlabshell_branch       = 'v1.9.4'
   $gitlab_manage_nginx      = true
   $gitlab_http_port         = '80'
   $gitlab_ssl_port          = '443'
@@ -42,6 +42,7 @@ class gitlab::params {
   $gitlab_unicorn_port      = '8080'
   $gitlab_unicorn_worker    = '2'
   $gitlab_bundler_flags     = '--deployment'
+  $gitlab_bundler_jobs      = $::processorcount
   $gitlab_ensure_postfix    = true
   $exec_path                = '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
   $ldap_enabled             = false
