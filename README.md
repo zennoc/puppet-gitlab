@@ -27,6 +27,9 @@ This module is based on the admin guides for [gitlab](https://github.com/gitlabh
 
 ## Dependencies
 - [puppetlabs/puppetlabs-stdlib](https://github.com/puppetlabs/puppetlabs-stdlib)
+- [puppetlabs/puppetlabs-vcsrepo](https://github.com/puppetlabs/puppetlabs-vcsrepo)
+- [puppetlabs/puppetlabs-git](https://github.com/puppetlabs/puppetlabs-git)
+
 See [gitlab example](https://github.com/sbadia/vagrant-gitlab/blob/master/examples/gitlab.pp).
 
 ## GitLab web interface
@@ -95,6 +98,10 @@ true)
 * `git_proxy`: Proxy for GIT access (default: undef)
 * `ssh_port`: Port accepting SSH connections (default: 22)
 * `google_analytics_id`: Google Analytics tracking ID (default: nil)
+* `company_logo_url`: Url to the company logo to be displayed at the bottom of the sign_in page (default: '')
+* `company_link`: Link to the company displayed under the logo of the company (default: '')
+* `company_name`: Name of the company displayed under the logo of the company (default: '')
+* `use_exim` : Apply a fix for compatibility with exim as explained at [gitlabhq/gitlabhq#4866](https://github.com/gitlabhq/gitlabhq/issues/486) (default: false)
 
 # Usage
 

@@ -57,17 +57,19 @@ class gitlab::params {
   $ssh_port                 = '22'
   $google_analytics_id      = ''
   $git_proxy                = undef
+  $company_logo_url         = ''
+  $company_link             = ''
+  $company_name             = ''
+  $use_exim                 = false
 
   # determine pre-requisite packages
   case $::osfamily {
     'Debian': {
-      $git_package_name = 'git-core'
       # system packages
       $system_packages = ['libicu-dev', 'python2.7','python-docutils',
                           'libxml2-dev', 'libxslt1-dev','python-dev']
     }
     'RedHat': {
-      $git_package_name = 'git'
       # system packages
       $system_packages = ['libicu-devel', 'perl-Time-HiRes','libxml2-devel',
                           'libxslt-devel','python-devel','libcurl-devel',

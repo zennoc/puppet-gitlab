@@ -223,6 +223,22 @@
 #   Proxy for git access
 #   default: ''
 #
+# [*company_logo_url*]
+#   Url to the company logo to be diplayed at the bottom of the sign_in page
+#   default: ''
+#
+# [*company_link*]
+#   Link to the company displayed under the logo of the company
+#   default: ''
+#
+# [*company_name*]
+#   Name of the company displayed under the logo of the company
+#   default: ''
+#
+# [*use_exim*]
+#   Apply a fix for compatibility with exim as explained at github.com/gitlabhq/gitlabhq/issues/4866
+#   default: false
+#
 # === Examples
 #
 # See examples/gitlab.pp
@@ -299,10 +315,15 @@ class gitlab(
     $ldap_method              = $gitlab::params::ldap_method,
     $ldap_bind_dn             = $gitlab::params::ldap_bind_dn,
     $ldap_bind_password       = $gitlab::params::ldap_bind_password,
-    $git_package_name         = $gitlab::params::git_package_name,
     $ssh_port                 = $gitlab::params::ssh_port,
     $google_analytics_id      = $gitlab::params::google_analytics_id,
     $git_proxy                = $gitlab::params::git_proxy,
+    # Deprecated params
+    $git_package_name         = undef,
+    $company_logo_url         = $gitlab::params::company_logo_url,
+    $company_link             = $gitlab::params::company_link,
+    $company_name             = $gitlab::params::company_name,
+    $use_exim                 = $gitlab::params::use_exim,
   ) inherits gitlab::params {
   case $::osfamily {
     Debian: {}
@@ -313,6 +334,11 @@ class gitlab(
       fail("${::osfamily} not supported yet")
     }
   } # case
+
+  # Deprecated params
+  if $git_package_name {
+    warning('The git_package_name parameter is deprecated and has no effect.')
+  }
 
   validate_absolute_path($git_home)
   validate_absolute_path($gitlab_ssl_cert)
@@ -354,6 +380,9 @@ class gitlab(
   validate_string($ldap_uid)
   validate_string($ldap_host)
   validate_string($google_analytics_id)
+  validate_string($company_logo_url)
+  validate_string($company_link)
+  validate_string($company_name)
 
   anchor { 'gitlab::begin': } ->
   class { '::gitlab::setup': } ->
