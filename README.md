@@ -26,9 +26,10 @@ This module is based on the admin guides for [gitlab](https://github.com/gitlabh
 - [puppet-gitlab](http://forge.puppetlabs.com/sbadia/gitlab) on puppet forge.
 
 ## Dependencies
+- [alup/puppet-rbenv](https://github.com/alup/puppet-rbenv)
+- [puppetlabs/puppetlabs-git](https://github.com/puppetlabs/puppetlabs-git)
 - [puppetlabs/puppetlabs-stdlib](https://github.com/puppetlabs/puppetlabs-stdlib)
 - [puppetlabs/puppetlabs-vcsrepo](https://github.com/puppetlabs/puppetlabs-vcsrepo)
-- [puppetlabs/puppetlabs-git](https://github.com/puppetlabs/puppetlabs-git)
 
 See [gitlab example](https://github.com/sbadia/vagrant-gitlab/blob/master/examples/gitlab.pp).
 
@@ -45,9 +46,12 @@ See [gitlab example](https://github.com/sbadia/vagrant-gitlab/blob/master/exampl
 
 * `ensure`:  Ensure gitlab/gitlab-shell repo are present, latest. absent is not yet supported (default: present)
 * `git_user`: Name of the gitlab (default: git)
+* `git_group`: Name of the group for the gitlab user (default: $git_user)
 * `git_home`: Home directory for gitlab repository (default: /home/git)
 * `git_email`: Email address for gitlab user (default: git@someserver.net)
 * `git_comment`: Gitlab user comment (default: GitLab)
+* `gitlab_manage_user`: Whether to manage the user account for gitlab (default: true)
+* `gitlab_manage_home`: Whether to manage the home directory for gitlab (default: true)
 * `gitlab_sources`: Gitlab sources (default: git://github.com/gitlabhq/gitlabhq.git)
 * `gitlab_branch`: Gitlab branch (default: 6-9-stable)
 * `gitlabshell_sources`: Gitlab-shell sources (default: git://github.com/gitlabhq/gitlab-shell.git)
@@ -107,6 +111,8 @@ true)
 
 _Note:_ Assume that a database server is already installed on your server/infrastructure (see: [vagrant-gitlab](https://github.com/sbadia/vagrant-gitlab/blob/master/examples/gitlab.pp)).
 
+## class gitlab
+
 ```puppet
 class {
   'gitlab':
@@ -119,6 +125,32 @@ class {
     gitlab_dbpwd      => $gitlab_dbpwd,
     ldap_enabled      => false,
 }
+```
+
+## class gitlab::ci
+
+```puppet
+class { 'gitlab::ci':
+  ci_comment         => 'GitLab',
+  gitlab_server_urls => ['https://gitlab.example.org']
+  gitlab_domain      => $gitlab_domain,
+  gitlab_dbtype      => 'mysql',
+  gitlab_dbname      => $ci_dbname,
+  gitlab_dbuser      => $ci_dbuser,
+  gitlab_dbpwd       => $ci_dbpwd,
+  gitlab_http_port   => 8081,
+}
+```
+
+## class gitlab::ci::runner
+
+```puppet
+# The registration token can be found at: http://ci.example.com/admin/runners, accessible through Header > Runners.
+class { 'gitlab::ci::runner':
+  ci_server_url      => 'https://ci.example.com',
+  registration_token => 'replaceme',
+}
+
 ```
 
 # Limitations

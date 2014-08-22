@@ -7,17 +7,20 @@ class gitlab::setup inherits gitlab {
 
   File {
     owner     => $git_user,
-    group     => $git_user,
+    group     => $git_group,
   }
 
   # user
-  user { $git_user:
-    ensure   => present,
-    shell    => '/bin/bash',
-    password => '*',
-    home     => $git_home,
-    comment  => $git_comment,
-    system   => true,
+  if($gitlab_manage_user)
+  {
+    user { $git_user:
+      ensure   => present,
+      shell    => '/bin/bash',
+      password => '*',
+      home     => $git_home,
+      comment  => $git_comment,
+      system   => true,
+    }
   }
 
   sshkey { 'localhost':
@@ -34,9 +37,12 @@ class gitlab::setup inherits gitlab {
   }
 
   # directories
-  file { $git_home:
-    ensure => directory,
-    mode   => '0755',
+  if($gitlab_manage_home)
+  {
+    file { $git_home:
+      ensure => directory,
+      mode   => '0755',
+    }
   }
 
   file { "${git_home}/gitlab-satellites":
@@ -77,22 +83,47 @@ class gitlab::setup inherits gitlab {
     }
   } # Case $::osfamily
 
-  # system packages
-  package { 'bundler':
-    ensure    => installed,
-    provider  => gem,
-  }
-
   # dev. dependencies
   ensure_packages($system_packages)
 
-  package { 'charlock_holmes':
-    ensure    => '0.6.9.4',
-    provider  => gem,
+  rbenv::install { $git_user:
+    group   => $git_group,
+    home    => $git_home,
+  }
+
+  # By default, puppet-rbenv sets ~/.profile to load rbenv, which is
+  # read when bash is invoked as an interactive login shell, but we
+  # also need ~/.bashrc to load rbenv (which is read by interactive
+  # but non-login shells). This works, but may not be the best
+  # solution, please see issue #114 if you have a better solution.
+  file { "${git_home}/.bashrc":
+    ensure  => link,
+    target  => "${git_home}/.profile",
+    require => Rbenv::Install[$git_user],
+  }
+
+  rbenv::compile { 'gitlab/ruby':
+    user   => $git_user,
+    home   => $git_home,
+    ruby   => $gitlab_ruby_version,
+    global => true,
+    notify => [
+      Exec['install gitlab-shell'],
+      Exec['install gitlab'],
+    ],
+  }
+
+  rbenv::gem { 'charlock_holmes':
+    ensure => '0.6.9.4',
+    user   => $git_user,
+    home   => $git_home,
+    ruby   => $gitlab_ruby_version,
   }
 
   # other packages
-  ensure_packages(['curl'])
+  if $gitlab_ensure_curl {
+    ensure_packages(['curl'])
+  }
 
   if $gitlab_ensure_postfix {
     ensure_packages(['postfix'])

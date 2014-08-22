@@ -4,8 +4,11 @@
 class gitlab::config inherits gitlab {
   File {
     owner     => $git_user,
-    group     => $git_user,
+    group     => $git_group,
   }
+
+  $socket_path = "${git_home}/gitlab/tmp/sockets/gitlab.socket"
+  $root_path = "${git_home}/gitlab/public"
 
   # gitlab
   if $gitlab_manage_nginx {

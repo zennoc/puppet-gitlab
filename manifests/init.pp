@@ -12,6 +12,10 @@
 #   Name of gitlab user
 #   default: git
 #
+# [*git_group*]
+#   Name of gitlab group
+#   default: $git_user
+#
 # [*git_home*]
 #   Home directory for gitlab repository
 #   default: /home/git
@@ -23,6 +27,14 @@
 # [*git_comment*]
 #   Gitlab user comment
 #   default: GitLab
+#
+# [*gitlab_manage_user*]
+#   Whether to manage the Gitlab user account
+#   default: true
+#
+# [*gitlab_manage_home*]
+#   Whether to manage the Gitlab user's home directory
+#   default: true
 #
 # [*gitlab_sources*]
 #   Gitlab sources
@@ -156,11 +168,15 @@
 #
 # [*gitlab_unicorn_port*]
 #   Port that unicorn listens on 172.0.0.1 for HTTP traffic
-#   (default: 8080)
+#   default: 8080
 #
 # [*gitlab_bundler_flags*]
 #   Flags that should be passed to bundler when installing gems
-#   (default: --deployment)
+#   default: --deployment
+#
+# [*gitlab_ruby_version*]
+#   Ruby version to install with rbenv for Gitlab user
+#   default: 2.1.2
 #
 # [*gitlab_bundler_jobs*]
 #   Number of jobs to use while installing gems.  Should match number of
@@ -168,6 +184,11 @@
 #
 # [*gitlab_ensure_postfix*]
 #   Whether or not this module should ensure the postfix package is
+#   installed (used to manage conflicts with other modules)
+#   default: true
+#
+# [*gitlab_ensure_curl*]
+#   Whether or not this module should ensure the curl package is
 #   installed (used to manage conflicts with other modules)
 #   default: true
 #
@@ -266,14 +287,18 @@
 class gitlab(
     $ensure                   = $gitlab::params::ensure,
     $git_user                 = $gitlab::params::git_user,
+    $git_group                = $git_user,
     $git_home                 = $gitlab::params::git_home,
     $git_email                = $gitlab::params::git_email,
     $git_comment              = $gitlab::params::git_comment,
+    $gitlab_manage_user       = $gitlab::params::gitlab_manage_user,
+    $gitlab_manage_home       = $gitlab::params::gitlab_manage_home,
     $gitlab_sources           = $gitlab::params::gitlab_sources,
     $gitlab_branch            = $gitlab::params::gitlab_branch,
     $gitlabshell_branch       = $gitlab::params::gitlabshell_branch,
     $gitlabshell_sources      = $gitlab::params::gitlabshell_sources,
     $gitlab_manage_nginx      = $gitlab::params::gitlab_manage_nginx,
+    $proxy_name               = 'gitlab',
     $gitlab_http_port         = $gitlab::params::gitlab_http_port,
     $gitlab_ssl_port          = $gitlab::params::gitlab_ssl_port,
     $gitlab_http_timeout      = $gitlab::params::gitlab_http_timeout,
@@ -305,6 +330,8 @@ class gitlab(
     $gitlab_bundler_flags     = $gitlab::params::gitlab_bundler_flags,
     $gitlab_bundler_jobs      = $gitlab::params::gitlab_bundler_jobs,
     $gitlab_ensure_postfix    = $gitlab::params::gitlab_ensure_postfix,
+    $gitlab_ensure_curl       = $gitlab::params::gitlab_ensure_curl,
+    $gitlab_ruby_version      = $gitlab::params::gitlab_ruby_version,
     $exec_path                = $gitlab::params::exec_path,
     $ldap_enabled             = $gitlab::params::ldap_enabled,
     $ldap_host                = $gitlab::params::ldap_host,

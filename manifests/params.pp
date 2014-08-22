@@ -4,7 +4,10 @@
 class gitlab::params {
 
   $ensure                   = 'present'
+  $gitlab_manage_user       = true
+  $gitlab_manage_home       = true
   $git_user                 = 'git'
+  $git_group                = $git_user
   $git_home                 = '/home/git'
   $git_email                = 'git@someserver.net'
   $git_comment              = 'GitLab'
@@ -44,7 +47,9 @@ class gitlab::params {
   $gitlab_bundler_flags     = '--deployment'
   $gitlab_bundler_jobs      = 1
   $gitlab_ensure_postfix    = true
-  $exec_path                = '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
+  $gitlab_ensure_curl       = true
+  $gitlab_ruby_version      = '2.1.2'
+  $exec_path                = "${git_home}/.rbenv/shims:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
   $ldap_enabled             = false
   $ldap_host                = 'ldap.domain.com'
   $ldap_base                = 'dc=domain,dc=com'
