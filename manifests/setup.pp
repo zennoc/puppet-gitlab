@@ -84,7 +84,7 @@ class gitlab::setup inherits gitlab {
   } # Case $::osfamily
 
   # dev. dependencies
-  ensure_packages($system_packages)
+  ensure_packages($gitlab::system_packages)
 
   rbenv::install { $git_user:
     group   => $git_group,
@@ -104,6 +104,7 @@ class gitlab::setup inherits gitlab {
 
   rbenv::compile { 'gitlab/ruby':
     user   => $git_user,
+    group  => $git_group,
     home   => $git_home,
     ruby   => $gitlab_ruby_version,
     global => true,

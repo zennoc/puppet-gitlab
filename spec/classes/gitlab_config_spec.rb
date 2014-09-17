@@ -2,12 +2,6 @@ require 'spec_helper'
 
 # Gitlab
 describe 'gitlab' do
-  let(:facts) {{
-    :osfamily       => 'Debian',
-    :fqdn           => 'gitlab.fooboozoo.fr',
-    :processorcount => '2',
-    :sshrsakey      => 'AAAAB3NzaC1yc2EAAAA'
-  }}
 
   ## Parameter set
   # a non-default common parameter set
@@ -16,6 +10,7 @@ describe 'gitlab' do
       :git_user               => 'gitlab',
       :git_home               => '/srv/gitlab',
       :gitlab_http_timeout    => '300',
+      :webserver_service_name => 'nginx',
     }
   end
 
@@ -47,7 +42,8 @@ describe 'gitlab' do
           :ensure => 'file',
           :owner  => 'root',
           :group  => 'root',
-          :mode   => '0644'
+          :mode   => '0644',
+          :notify => "Service[#{params_set[:webserver_service_name]}]"
         )}
         it { should contain_file('/etc/nginx/conf.d/gitlab.conf').with_content(/^\s*server unix:\/home\/git\/gitlab\/tmp\/sockets\/gitlab.socket;$/)}
         it { should contain_file('/etc/nginx/conf.d/gitlab.conf').with_content(/^\s*listen 80;$/)}

@@ -260,6 +260,10 @@
 #   Apply a fix for compatibility with exim as explained at github.com/gitlabhq/gitlabhq/issues/4866
 #   default: false
 #
+# [*system_packages*]
+#   Packages that Gitlab needs to work, and that will be managed by the Gitlab module
+#   default: $gitlab::params::system_packages
+#
 # === Examples
 #
 # See examples/gitlab.pp
@@ -345,6 +349,8 @@ class gitlab(
     $ssh_port                 = $gitlab::params::ssh_port,
     $google_analytics_id      = $gitlab::params::google_analytics_id,
     $git_proxy                = $gitlab::params::git_proxy,
+    $webserver_service_name   = $gitlab::params::webserver_service_name,
+    $system_packages          = $gitlab::params::system_packages,
     # Deprecated params
     $git_package_name         = undef,
     $company_logo_url         = $gitlab::params::company_logo_url,
