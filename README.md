@@ -157,11 +157,36 @@ class { 'gitlab::ci::runner':
 
 # Limitations
 
-- TBF
+This module has been built on and tested against Puppet 2.7 and higher.
+
+The module has been tested on:
+
+* RedHat Enterprise Linux 5/6/7
+* Debian 6/7
+* CentOS 5/6/7
+* Ubuntu 12.04/14.04
+
+Testing on other platforms has been light and cannot be guaranteed. 
 
 # Development
 
 Want to help - send a pull request.
+
+
+# Beaker-Rspec
+
+This module has beaker-rspec tests
+
+To run:
+
+```shell
+bundle install
+bundle exec rspec spec/acceptance
+# or use BEAKER_destroy=no to keep the resulting vm
+BEAKER_destroy=no bundle exec rspec spec/acceptance
+```
+
+And test on http://10.255.127.206/
 
 ## Development environment with vagrant
 

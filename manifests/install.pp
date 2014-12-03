@@ -54,6 +54,7 @@ class gitlab::install inherits gitlab {
     owner             => $git_user,
     path              => "${git_home}/gitlab/config/unicorn.rb",
     relative_url_root => $gitlab_relative_url_root,
+    unicorn_listen    => $gitlab_unicorn_listen,
     unicorn_port      => $gitlab_unicorn_port,
     unicorn_worker    => $gitlab_unicorn_worker,
   }
@@ -107,7 +108,10 @@ class gitlab::install inherits gitlab {
     command => '/usr/bin/yes yes | bundle exec rake gitlab:setup RAILS_ENV=production',
     cwd     => "${git_home}/gitlab",
     creates => "${git_home}/.gitlab_setup_done",
-    require => Exec['install gitlab'],
+    require => [
+      Exec['install gitlab-shell'],
+      Exec['install gitlab'],
+    ],
     notify  => Exec['precompile assets'],
     before  => Exec['run migrations'],
   }
@@ -131,6 +135,13 @@ class gitlab::install inherits gitlab {
       owner   => 'root',
       group   => 'root',
       require => Exec['setup gitlab database'];
+  }
+
+  file { "${git_home}/gitlab-shell/hooks/update":
+    ensure  => present,
+    content => template('gitlab/update.erb'),
+    mode    => '0775',
+    require => File["${git_home}/gitlab-shell/config.yml"],
   }
 
 }
